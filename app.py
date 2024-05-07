@@ -125,7 +125,7 @@ class Item(Resource):
         else: 
             task.status = "NOK"
         task.notes = "resp_code: {}, resp_time : {}" .format(resp.status_code,  resp.elapsed.total_seconds()*1000)
-        
+        task.update_time = datetime.now()
         save(task)
         return task
     
