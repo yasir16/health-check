@@ -67,9 +67,12 @@ healthCheckHistoryFields = {
 def save(x):
     data = x
     try:
-        hst = HealthCheckHistory(hc_id=data.id,name=data.name, url=data.url, status=data.status, description=data.description,notes=data.notes,create_time=datetime.now())
         db.session.add(x)
+        db.session.flush()
+        hst = HealthCheckHistory(hc_id=x.id,name=data.name, url=data.url, status=data.status, description=data.description,notes=data.notes,create_time=datetime.now())
+
         db.session.add(hst)
+        
     except:
         db.session.rollback()
         raise
@@ -90,7 +93,7 @@ class Items(Resource):
             else: 
                 x.status = "NOK"
             x.update_time = datetime.now()
-            x.notes = '%d' % resp.status_code
+            x.notes = "resp_code: {}, resp_time : {}" .format(resp.status_code,  resp.elapsed.total_seconds()*1000)
             save(x)
         return list
     
@@ -99,6 +102,12 @@ class Items(Resource):
     def post(self):
         data = request.json
         item = HealthCheck(name=data['name'], url=data['url'], status=data['status'], description=data['description'],create_time=datetime.now())
+        resp = requests.get(data['url'],timeout=5)
+        if resp.status_code == 200:
+            item.status = "OK"
+        else: 
+            item.status = "NOK"
+        item.notes = "resp_code: {}, resp_time : {}" .format(resp.status_code,  resp.elapsed.total_seconds()*1000)
         save(item)
         
         list = HealthCheck.query.all()
@@ -115,7 +124,7 @@ class Item(Resource):
             task.status = "OK"
         else: 
             task.status = "NOK"
-        task.notes = '%d' % resp.status_code
+        task.notes = "resp_code: {}, resp_time : {}" .format(resp.status_code,  resp.elapsed.total_seconds()*1000)
         
         save(task)
         return task
